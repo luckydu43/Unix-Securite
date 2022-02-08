@@ -1,2 +1,50 @@
 blinder le port NTP (123) qui permet à un attaquant de lister les machines connectées sur le réseau
 Utiliser passwd pour définir un mdp
+
+nmap cheat sheet : https://www.stationx.net/nmap-cheat-sheet/
+tryhackme.com
+
++------+
+| nmap |
++------+
+-v permet plus de clarté
+-p- permet de taper sur TOUS les ports
+
+nmap -sS 10.20.30.72 -v affiche les 1000 premiers ports les plus utilisés en protocole TCP
+On peut commencer à attaquer mais avec les conf par défaut, ça revient à tester tout et n'importe quoi
+
+nmap -sS -p- 10.20.30.72 -v
+Scanne TOUS les ports de la machine en TCP
+Un malware ouvre très généralement son port au-delà de 10000. Tout port au-delà de 10000 est suspect
+
+nmap -sX 10.20.30.72 -v
+scan Xmas
+
+nmap -sS -sV 10.20.30.72
+Fait le scan et affiche la version de certains services qui écoutent le port
+Il va donc envoyer une requête spécifique pour demander la version du service
+Si le logiciel n'est pas à jour, une cve et un poc et on entre
+
+nmap -O 10.20.30.72
+Donne l'OS cible
+Si ça donne VirtualBox au lieu de Linux, il y a des techniques pour aller plus loin
+
+Commande purement défensive mais TRES bruyante et TRES longue
+nmap -sS -O -sV -T4 -p- -sC --script vuln -v 10.20.30.72
+-sS affiche les ports
+-O l'OS
+-sV la version des services
+-T4 limite la durée du scan
+-p- tape partout
+--script vuln va associer des CVE aux versions issues de -sV
+
+
++--------+
+| Shodan |
++--------+
+ping site.com donne l'ip
+https://www.shodan.io/host/42.53.76.31 affiche les infos du serveur derrière l'ip
+webcamxp 5 country:"FR"
+cisco no pass
+hp laserjet port:"8081"
+
