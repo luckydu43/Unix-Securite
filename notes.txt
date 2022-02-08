@@ -1,2 +1,2 @@
 blinder le port NTP (123) qui permet à un attaquant de lister les machines connectées sur le réseau
-
+Utiliser passwd pour définir un mdp
