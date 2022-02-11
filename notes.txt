@@ -183,4 +183,13 @@ iptables-restore < default-iptables.txt
 		Le test1.sh doit avoir les droits d'exécution, chmod 755
 
 
++------------------+
+| AlienVault OSSIM |
++------------------+
+Il faut un serveur et un sensor
+Les deux sont sur le réseau privé hôte
+Le sensor a un 2eme adapter réseau, réseau privé hôte toujours, promiscuité allow all
+séparer les ip mais les placer dans le créneau du réseau hôte, voir dans le "gestionnaire de réseau hôte de VirtualBox"
+Il permet de déployer HIDS sur des serveurs, une fois fait il donne un dashboard où il affiche des alertes
+Nikto, fourni, permet de scanner les potentielles vulnérabilités d'un service Web
 
