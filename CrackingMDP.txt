@@ -8,7 +8,7 @@ sshd:1037:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
 service_user:1038:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
 [] Dumping cached domain logon information (domainusernamehash)
 ROOTME.LOCAL/PODALIRIUS:$DCC2$10240#PODALIRIUS#9d3e8dbe4d9816fa1a5dda431ef2f6f1
-ROOTME.LOCAL/SHUTDOWN$DCC2:$10240#SHUTDOWN#9d3e8dbe4d9816fa1a5dda431ef2f6f1
+ROOTME.LOCAL/SHUTDOWN:$DCC2:$10240#SHUTDOWN#9d3e8dbe4d9816fa1a5dda431ef2f6f1
 ROOTME.LOCAL/Administrator:15a57c279ebdfea574ad1ff91eb6ef0c:Administrator
 ROOTME.LOCAL/Administrator:$DCC2$10240#Administrator#23d97555681813db79b2ade4b4a6ff25
 [] Dumping LSA Secrets
