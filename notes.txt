@@ -1,45 +1,45 @@
-Utiliser passwd pour définir un mdp
+	Utiliser passwd pour définir un mdp
 
-nmap cheat sheet : https://www.stationx.net/nmap-cheat-sheet/
-tryhackme.com
-book.hacktricks.xyz
-https://hackmd.io/kHFoiS5HSHKRdV7az960TQ
+	nmap cheat sheet : https://www.stationx.net/nmap-cheat-sheet/
+	tryhackme.com
+	book.hacktricks.xyz
+	https://hackmd.io/kHFoiS5HSHKRdV7az960TQ
 
-Sécuriser un linux peut passer par une mise en place de droits 0740 sur /etc/sudoers avec seul l'admin concerné y étant inscrit
+	Sécuriser un linux peut passer par une mise en place de droits 0740 sur /etc/sudoers avec seul l'admin concerné y étant inscrit
 
 +------+
 | nmap |
 +------+
--v permet plus de clarté
--p- permet de taper sur TOUS les ports
+	-v permet plus de clarté
+	-p- permet de taper sur TOUS les ports
 
 nmap -sS 10.20.30.72 -v affiche les 1000 premiers ports les plus utilisés en protocole TCP
-On peut commencer à attaquer mais avec les conf par défaut, ça revient à tester tout et n'importe quoi
+	On peut commencer à attaquer mais avec les conf par défaut, ça revient à tester tout et n'importe quoi
 
 nmap -sS -p- 10.20.30.72 -v
-Scanne TOUS les ports de la machine en TCP
-Un malware ouvre très généralement son port au-delà de 10000. Tout port au-delà de 10000 est suspect
+	Scanne TOUS les ports de la machine en TCP
+	Un malware ouvre très généralement son port au-delà de 10000. Tout port au-delà de 10000 est suspect
 
 nmap -sX 10.20.30.72 -v
 scan Xmas
 
 nmap -sS -sV 10.20.30.72
-Fait le scan et affiche la version de certains services qui écoutent le port
-Il va donc envoyer une requête spécifique pour demander la version du service
-Si le logiciel n'est pas à jour, une cve et un poc et on entre
+	Fait le scan et affiche la version de certains services qui écoutent le port
+	Il va donc envoyer une requête spécifique pour demander la version du service
+	Si le logiciel n'est pas à jour, une cve et un poc et on entre
 
 nmap -O 10.20.30.72
-Donne l'OS cible
-Si ça donne VirtualBox au lieu de Linux, il y a des techniques pour aller plus loin
+	Donne l'OS cible
+	Si ça donne VirtualBox au lieu de Linux, il y a des techniques pour aller plus loin
 
-Commande purement défensive mais TRES bruyante et TRES longue
+	Commande purement défensive mais TRES bruyante et TRES longue
 nmap -sS -O -sV -T4 -p- -sC --script vuln -v 10.20.30.72
--sS affiche les ports
--O l'OS
--sV la version des services
--T4 limite la durée du scan
--p- tape partout
---script vuln va associer des CVE aux versions issues de -sV
+	-sS affiche les ports
+	-O l'OS
+	-sV la version des services
+	-T4 limite la durée du scan
+	-p- tape partout
+	--script vuln va associer des CVE aux versions issues de -sV
 
 
 +--------+
@@ -54,7 +54,7 @@ hp laserjet port:"8081"
 +----------+
 | USBGuard |
 +----------+
-Permet de bloquer les ports usb sous linux
+	Permet de bloquer les ports usb sous linux
 apt install usbguard
 systemctl status usbguard le donne "inactif" après install
 usbguard generate-policy > /etc/usbguard/rules.conf
@@ -67,13 +67,13 @@ usbguard block-device 5
 +------------+
 | Metasploit |
 +------------+
-Dans Kali, ouvrir une console avec msfconsole
+	Dans Kali, ouvrir une console avec msfconsole
 search vsftp
 use exploit/unix/ftp/vsftpd_234_backdoor
 show options
 set RHOSTS 10.20.30.72
 run
-ATTENTION : le $ ou le # n'est pas affiché
+	ATTENTION : le $ ou le # n'est pas affiché
 
 use auxiliary/scanner/ssh/sshlogin
 show options
@@ -90,25 +90,25 @@ ssh user@10.20.30.72
 +-----------------+
 | Gestion des mdp |
 +-----------------+
-passwd [options] [user]
+	passwd [options] [user]
 passwd -m15 -m30 user1 définit une durée minimale de mdp à 15j et maximale à 30j pour user1
-+- Vérifier que les mdp dans /etc/passwd et /etc/shadow soient hachés, non en clair
-+- Vérifier l’activation de l’authentification par mots de passe "shadow"
-édition du fichier etc/passwd, le 2ème champ doit contenir "x" pour tous les comptes (confirme l’activation de l’authentification par /etc/shadow)
-+- si le fichier "shadow" est non utilisé, la commande pwconv convertit le fichier /etc/passwd en /etc/shadow
-+- vérification du remplissage du 2ème champ fichier /etc/shadow (sinon des comptes sans mot de passe existent)
-+- blocage du changement de mot de passe non "shadow"
-+- utilisation de PAM pour forcer la création de mots de passe solides
-+- limitation de la durée de vie et autres options des mots de passe et comptes utilisateurs : durée de vie < temps nécessaire au craquage
-+- interdiction de connexion directe pour le compte "root local", fichier /etc/securetty vide, seul sera utilisé le changement d'identité par su root
+	+- Vérifier que les mdp dans /etc/passwd et /etc/shadow soient hachés, non en clair
+	+- Vérifier l’activation de l’authentification par mots de passe "shadow"
+	édition du fichier etc/passwd, le 2ème champ doit contenir "x" pour tous les comptes (confirme l’activation de l’authentification par /etc/shadow)
+	+- si le fichier "shadow" est non utilisé, la commande pwconv convertit le fichier /etc/passwd en /etc/shadow
+	+- vérification du remplissage du 2ème champ fichier /etc/shadow (sinon des comptes sans mot de passe existent)
+	+- blocage du changement de mot de passe non "shadow"
+	+- utilisation de PAM pour forcer la création de mots de passe solides
+	+- limitation de la durée de vie et autres options des mots de passe et comptes utilisateurs : durée de vie < temps nécessaire au craquage
+	+- interdiction de connexion directe pour le compte "root local", fichier /etc/securetty vide, seul sera utilisé le changement d'identité par su root
 
-désactivation de l'accès openssh pour le compte root
-+- spécification des utilisateurs autorisés à utiliser la commande "su"
+	désactivation de l'accès openssh pour le compte root
+	+- spécification des utilisateurs autorisés à utiliser la commande "su"
 
 +---------+
 | sudo -l |
 +---------+
-+- permet d'afficher les droits d'élévation pour l'user courant
+	+- permet d'afficher les droits d'élévation pour l'user courant
 
 +---------+
 | Linpeas |
@@ -123,39 +123,39 @@ hashcat 7ecc19e1a0be36ba2c6f05d06b5d3058 -m 0 -O /usr/share/wordlists/rockyou.tx
 +----------+
 | iptables |
 +----------+
-+- Pour voir les règles des chaînes de la table FILTER, avec le port concerné
+	+- Pour voir les règles des chaînes de la table FILTER, avec le port concerné
 iptables -L -v
--A précise la table
--p précise le protocole
--j précise l'action
+	-A précise la table
+	-p précise le protocole
+	-j précise l'action
 iptables -A INPUT -p tcp -m multiport --dport 22,80,443 -j DROP
 iptables -A OUTPUT -p tcp -m multiport --dport 22,80,443 -j DROP
-+- blinder le port NTP (123) qui permet à un attaquant de lister les machines connectées sur le réseau
+	+- blinder le port NTP (123) qui permet à un attaquant de lister les machines connectées sur le réseau
 iptables -A INPUT -p tcp --dport 123 -j DROP
 iptables -A OUTPUT -p tcp --sport 123 -j DROP
-+- Pour créer une chaîne "SSH" qui contient toutes les règles SSH
+	+- Pour créer une chaîne "SSH" qui contient toutes les règles SSH
 iptables -N SSH
 iptables -A INPUT -j SSH
-+- Pour vérifier l'action
+	+- Pour vérifier l'action
 nmap -Pn 10.20.30.72
-+-  Pour voir les ports filtrés distants
+	+-  Pour voir les ports filtrés distants
 nmap -sA 10.20.30.72
-+- limiter le SSH à une seule IP connue
+	+- limiter le SSH à une seule IP connue
 iptables -A SSH -p tcp -s 10.20.30.72 -j ACCEPT
-+- limiter tous les protocoles à cette IP
+	+- limiter tous les protocoles à cette IP
 iptables -A SSH -p all -s 10.20.30.72 -j ACCEPT
-Pour loguer les connections entrantes
+	Pour loguer les connections entrantes
 iptables -P INPUT DROP
 iptables -A INPUT -j LOG --log-prefix 'connection dropped :'
-Les logs sont dans /var/log/messages
+	Les logs sont dans /var/log/messages
 tail -f /var/log/messages pour voir en temps réel le fichier
-+- Limiter le flooding ICMP
+	+- Limiter le flooding ICMP
 iptables -a INPUT -p icmp -m limit --limit 1/s --limit-burst 1 -j ACCEPT
-+- loguer ce qui passe mais surtout pas ce qui a été refusé pour éviter une surcharge des logs en cas de flooding
+	+- loguer ce qui passe mais surtout pas ce qui a été refusé pour éviter une surcharge des logs en cas de flooding
 iptables -a INPUT -p icmp -m limit --limit 1/s --limit-burst 1 -j LOG --log-prefix 'ICMP 1/s accepté :'
-+- générer du flooding icmp
+	+- générer du flooding icmp
 hping3 -1 --flood 10.20.30.72
-+- sauvegarde et restauration iptables
+	+- sauvegarde et restauration iptables
 iptables-save > default-iptables.txt
 iptables-restore < default-iptables.txt
 
