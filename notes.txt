@@ -505,3 +505,54 @@ Vérification de la configuration côté serveur :
 Automatisation du démarrage côté serveur
 	$ systemctl enable wg-quick@wg
 
+
++------------------------+
+| Audit, logs, messaging |
++------------------------+
+Auditd
+	$ apt install auditd
+	$ aureport
+dmesg
+	$ dmesg
+
++----------------------------------------+
+| Installation de l'IDS SELKS par Docker |
++----------------------------------------+
+SELKS contient un ELK et l'IDPS/NSM Suricata.
+Il propose l'installation de portainer qui facilite la gestion de Docker
+	$ git clone https://github.com/StamusNetworks/SELKS
+	$ cd SELKS/docker
+	$ apt install docker.io
+	$ ./easy-setup.sh
+		Accepter l'installation de Portainer et sélectionner toutes les connexions en les tapant une à une séparées par des espaces
+		Définir un mot de passe pour Portainer depuis son interface d'administration
+	$ docker ps
+		Affiche la liste des containers
+	$ docker restart [nom_du_container]
+		$ docker restart portainer
+	$ docker-compose up -d
+Se connecter à Portainer depuis http://localhost:9443 avec le compte créé
+Se connecter à Scirius depuis http://localhost avec le couple selks-user:selks-user
+Se connecter à Suricata depuis https://localhost/suricata/ sans compte
+Se connecter à Cyberchef depuis https://localhost/static/cyberchef/ sans compte
+
++----------------------+
+| Dépôts Github sympas |
++----------------------+
+GCHQ
+	https://github.com/orgs/gchq/repositories
+ANSSI
+	https://github.com/ANSSI-FR
+
++---------------------------------+
+| Sondes de détection d'intrusion |
++---------------------------------+
+Fail2ban, sshguard, denyhosts
+
+Fail2ban
+	$ apt install fail2ban
+	$ systemctl start fail2ban
+	$ systemctl enable fail2ban
+		La conf est dans /etc/fail2ban
+		Ne rien toucher, juste surcharger la conf dans /etc/fail2ban/jail.d
+	$ fail2ban-client status
