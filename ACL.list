@@ -1,0 +1,54 @@
+ :~$ mkdir test
+ :~$ cd test
+ :~/test$ touch fic
+ :~/test$ ls -ltr fic
+-rw-rw-r-- 1 gerard gerard 0 Sep  3 19:22 fic
+ :~/test$ getfacl fic
+# file: fic
+# owner: gerard
+# group: gerard
+user::rw-
+group::rw-
+other::r--
+
+ :~/test$ setfacl -m user:cathia:rwx fic
+ :~/test$ getfacl fic
+# file: fic
+# owner: gerard
+# group: gerard
+user::rw-
+user:cathia:rwx
+group::rw-
+mask::rwx
+other::r--
+
+ :~/test$ getfacl --omit-header fic
+user::rw-
+user:cathia:rwx
+group::rw-
+mask::rwx
+other::r--
+
+ :~/test$ ls -ltr fic
+-rw-rwxr--+ 1 gerard gerard 0 Sep  3 19:22 fic
+ :~/test$ chmod g-w fic
+ :~/test$ ls -ltr fic
+-rw-r-xr--+ 1 gerard gerard 0 Sep  3 19:22 fic
+ :~/test$ getfacl --omit-header fic
+user::rw-
+user:cathia:rwx			#effective:r-x
+group::rw-			#effective:r--
+mask::r-x
+other::r--
+
+ :~/test$ chmod g+w fic
+ :~/test$ ls -ltr fic
+-rw-rwxr--+ 1 gerard gerard 0 Sep  3 19:22 fic
+ :~/test$ getfacl --omit-header fic
+user::rw-
+user:cathia:rwx
+group::rw-
+mask::rwx
+other::r--
+
+ :~/test$ 

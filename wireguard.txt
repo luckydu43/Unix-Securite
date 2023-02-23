@@ -1,0 +1,62 @@
+sudo apt install wireguard
+ou
+sudo dnf install elrepo-release epel-release
+sudo dnf install wireguard-tools
+
+-------------------------------------------
+
+wg genkey | tee privatekey | wg pubkey > publickey
+Deux fois.
+Un pour le client, un pour le serveur
+
+-------------------------------------
+
+Mettre 
+net.ipv4.ip_forward=1
+
+Dans /etc/sysctl.d/wg.conf
+
+Sysctl -p /etc/sysctl.d/wg.conf
+
+---------------------------------------------
+
+[Interface]
+Address = 192.168.10.11/24
+ListenPort = 51820
+
+PrivateKey = [Private key of server]
+
+[Peer]
+PublicKey = [Public key of client]
+AllowedIPs = 192.168.10.12/32
+
+------------------------------------------------------------------
+
+[Interface]
+Address = 192.168.10.12/24
+
+PrivateKey = [Private key of client]
+
+[Peer]
+Endpoint = yourserveripgoeshere:51820
+PublicKey = [Public key of server]
+AllowedIPs = 192.168.10.0/24, 10.0.10.0/24
+
+------------------------------------------------------
+
+wg-quick up wg0
+
+-----------------------
+
+Wg pour tester
+
+--------------------
+
+Sudo systemctl enable wg-quick@wg0
+
+----------------------
+
+PostUp = iptables -A FORWARD -i %i -d 10.0.10.0/24 -j ACCEPT; iptables -A FORWARD -i %i -j DROP; iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -d 10.0.10.0/24 -j ACCEPT; iptables -D FORWARD -i %i -j DROP; iptables -t nat -D POSTROUTING -o eth1 -j MASQUERADE
+
+

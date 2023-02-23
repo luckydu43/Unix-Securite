@@ -1,0 +1,63 @@
+Nous allons simuler une attaque bindshell sur notre linux.
+
+On utilise netcat pour ce faire.
+
+	cd /tmp
+	cp /bin/nc /tmp/freedom
+	./freedom -k -w 1 -l 41000 > /dev/null &
+	rm freedom
+
+On efface le fichier nc copié dans /tmp aprés usage, pour montre comment on peut le récupérer.
+
+	ss /nalp
+
+montre un process 'freedom' inconnu avec un port ouvert.
+
+	ls -al /proc/PID (PID obtenu à la commande précédente)
+
+on voit :
+cwd = /tmp
+mais freedom n'y est plus.
+
+	cp /proc/<PID>/exe /tmp/recovered_bin
+
+Un simple sha1sum devrait pouvoir retrouver le binaire d'origine.
+
+La comparaison de 
+
+	cat /proc/PID/comm
+	cat /proc/PID/cmdline
+
+montre des différences si le malware a tenté de masquer ses traces.
+
+	strings /proc/PID/environ
+
+montre l'environnement de démarrage du binaire.
+
+	ls -al /proc/<PID>/fd
+
+montre les librairies qui ont été chargées en même temps que le binaire. Potentiellement des librairies spécifiques ?
+
+	cat /proc/<PID>/stack
+
+Affiche des appels à accept() qui indique une attente sur le réseau.
+
+	cat /proc/<PID>/status
+
+donne des informations complémentaires, comme PPID
+
+
+Moral de cette histoire : 
+
+Surveillés les process en mémoire
+Ne coupez pas un process suspect jusqu'à ce que vous l'ayez analysé
+
+
+
+
+
+
+
+
+
+
