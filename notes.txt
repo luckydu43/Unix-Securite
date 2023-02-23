@@ -393,20 +393,46 @@ squid-cache aussi
 Un proxy est un mandataire qui effectue une action déléquée de chez moi vers l'extérieur
 Un reverse-proxy est un mandataire qui effectue une action déléguée de l'extérieur vers chez moi
 
-Un proxy sert de cache, de filtrage de contenu (liste noire/blanche), de pare-feu. On peut changer toute la requête comme le User-Agent par exemple.
+Un proxy sert de cache, de filtrage de contenu (liste noire/blanche), de pare-feu, de filtre de connexion. On peut changer toute la requête comme le User-Agent par exemple.
 Il faut régulièrement purger le cache du proxy.
 Rupture de flux : le proxy déchiffre le paquet pour vérifier le contenu puis rechiffre le paquet. Cela est possible puisque l'échange des clés est réalisé : le proxy (pare-feu) dispose des clés de chez moi et de l'extérieur.
 
-Un reverse-proxy sert à présenter une ressource. On peut alors présenter une page en cache ou filtrer les connexions
+Un reverse-proxy sert à présenter une ressource. On peut alors présenter une page en cache ou filtrer/limiter les connexions
 
 $ apt install squid
 $ cp squid.conf squid.conf.backup
 $ grep -Ev '^$|^#' squid.conf.backup > squid.conf
 	On enlève les lignes vides et les lignes commençant par un #
 Dans ce fichier de conf, on définit les ports interdits et autorisés, on oblige le CONNECT sur le port 443 seul, on autorise le manager à se connecter en localhost et nulle part ailleurs, on configure le cache et son délai entre les rafraîchissements
+Pour ajouter dans la conf un groupe de machines à se connecter à mon serveur :
+	$ vim /etc/squid/squid.conf
+		acl local_clients src 10.20.0.0/16
+		http_access allow local_clients
+Pour retirer des paramètres du header :
+	$ vim /etc/squid/squid.conf
+		request_header_access User-Agent deny all
+		request_header_access Via deny all
+		request_header_access X-Forwarded-For deny all
+$ squid -k check
+	C'est un linter pour vérifier la cohérence du fichier de configuration.
+	Il en existe d'autres pour d'autres logiciels y compris apache :
+		https://github.com/jchampio/linter-apache-configtest
+$ systemctl restart squid
+$ systemctl status squid
+Je configure Firefox pour utiliser mon proxy :
+	- Configuration manuelle du proxy
+		Proxy HTTP 127.0.0.1
+		Port 3128 (défini dans etc/squid/squif.conf)
+http://dsi.ut-capitole.fr/hidden/test/
+Ce site est un miroir renvoyant les informations qu'on lui a envoyé.
+On peut l'utiliser pour voir si notre proxy fonctionne.
 
 $ apt install squidguard
-	Pour que squid soit conscient de la présence de squidguard il faut ajouter une ligne dans la conf.
+	Pour que squid soit conscient de la présence de squidguard il faut ajouter une ligne dans la conf de squid.
+		$ vim /etc/squid/squid.conf
+			url_rewrite_program /usr/bin/squidGuard
+		$ vim /etc/squidguard/squidGuard.conf
+			On définit les listes de sites autorisés et interdits et les redirections
 	Configurer squid et squidguard est long
 	Vérifier si un script Ansible existe pour automatiser le déploiement d'un poroxy bien configuré.
 
@@ -685,5 +711,3 @@ Si docker est lancé
 	$ curl -so wazuh-agent-4.3.10.deb https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_4.3.10-1_amd64.deb
 	$ systemctl start wazuh-manager
 	$ systemctl enable wazuh-manager
-
-
