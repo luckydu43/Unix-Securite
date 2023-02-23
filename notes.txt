@@ -356,7 +356,8 @@ Permet de bloquer les ports usb sous linux
 | linPEAS |
 +---------+
 Il y a différents PEAS (linPEAS, winPEAS)
-C'est un script à exécuter sur un serveur pour en obtenir des informations
+C'est un script à exécuter sur un serveur pour en obtenir des informations.
+Il recherche essentiellement des problèmes de configuration système pouvant mener à de l'élévation de privilèges
 Plus la couleur est aggressive sur un fond aggressif, plus il s'agit d'un problème grave pouvant entraîner une porte d'entrée :
 	RED/YELLOW: 95% a PE vector
 	RED: You should take a look to it
@@ -369,6 +370,52 @@ Il devrait être exécuté régulièrement sur les serveurs de production
 Il pourrait être interéssant de placer la sortie dans un journal et comparer les diff entre 2 exécutions.
 
 $ curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh
+
++-------+
+| Lynis |
++-------+
+$ apt install lynis
+$ lynis audit system
+Script qui vérifie les configurations des logiciels et services installés
+En bas du rapport, il propose des solutions correctives avec des liens
+
++----------+
+| CheckSec |
++----------+
+Vérifie les mesures de sécurité prises sur les fichiers exécutables
+$ apt install checksec
+
++-------+
+| Proxy |
++-------+
+cacher-ng est un proxy
+squid-cache aussi
+Un proxy est un mandataire qui effectue une action déléquée de chez moi vers l'extérieur
+Un reverse-proxy est un mandataire qui effectue une action déléguée de l'extérieur vers chez moi
+
+Un proxy sert de cache, de filtrage de contenu (liste noire/blanche), de pare-feu. On peut changer toute la requête comme le User-Agent par exemple.
+Il faut régulièrement purger le cache du proxy.
+Rupture de flux : le proxy déchiffre le paquet pour vérifier le contenu puis rechiffre le paquet. Cela est possible puisque l'échange des clés est réalisé : le proxy (pare-feu) dispose des clés de chez moi et de l'extérieur.
+
+Un reverse-proxy sert à présenter une ressource. On peut alors présenter une page en cache ou filtrer les connexions
+
+$ apt install squid
+$ cp squid.conf squid.conf.backup
+$ grep -Ev '^$|^#' squid.conf.backup > squid.conf
+	On enlève les lignes vides et les lignes commençant par un #
+Dans ce fichier de conf, on définit les ports interdits et autorisés, on oblige le CONNECT sur le port 443 seul, on autorise le manager à se connecter en localhost et nulle part ailleurs, on configure le cache et son délai entre les rafraîchissements
+
+$ apt install squidguard
+	Pour que squid soit conscient de la présence de squidguard il faut ajouter une ligne dans la conf.
+	Configurer squid et squidguard est long
+	Vérifier si un script Ansible existe pour automatiser le déploiement d'un poroxy bien configuré.
+
++--------+
+| Miroir |
++--------+
+http://dsi.ut-capitole.fr/hidden/test/
+Ce site est un miroir renvoyant les informations qu'on lui a envoyé.
+On peut l'utiliser pour voir si notre proxy fonctionne.
 
 +------------------------+
 | Web-App Firewall (WAF) |
@@ -400,6 +447,12 @@ DirBuster
 | Configuration d'un serveur mail |
 +---------------------------------+
 Configuration de DNS et SPF, utilisation de SSL/TLS, configuration des ports de messagerie (les ports SMTP, POP et IMAP doivent n'accepter que les connexions depuis les adresses IP autorisées), pare-feu (bloquer les connexions entrantes non sécurisées), surveillance des journaux, mise à jour régulière, filtres anti-spam, DKIM et DMARC (détection des courriels falsifiés), logiciels anti-virus et anti-malware
+Utiliser au moins un MTA (Mail Transfer Agent) qui va filtrer les mails entrants avec les filtres milter pour éliminer les mails pour soulager le serveur de mail
+
++-----+
+| FTP |
++-----+
+Ne JAMAIS utiliser FTP ou RDP, utiliser SFTP à minima
 
 +------+
 | Hash |
@@ -632,3 +685,5 @@ Si docker est lancé
 	$ curl -so wazuh-agent-4.3.10.deb https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_4.3.10-1_amd64.deb
 	$ systemctl start wazuh-manager
 	$ systemctl enable wazuh-manager
+
+
