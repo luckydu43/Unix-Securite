@@ -353,9 +353,53 @@ Permet de bloquer les ports usb sous linux
 	+- permet d'afficher les droits d'élévation pour l'user courant
 
 +---------+
-| Linpeas |
+| linPEAS |
 +---------+
+Il y a différents PEAS (linPEAS, winPEAS)
+C'est un script à exécuter sur un serveur pour en obtenir des informations
+Plus la couleur est aggressive sur un fond aggressif, plus il s'agit d'un problème grave pouvant entraîner une porte d'entrée :
+	RED/YELLOW: 95% a PE vector
+	RED: You should take a look to it
+	LightCyan: Users with console
+	Blue: Users without console & mounted devs
+	Green: Common things (users, groups, SUID/SGID, mounts, .sh scripts, cronjobs) 
+	LightMagenta: Your username
+Ca fait le tour de l'OS complet en levant des éventuelles sources de problème
+Il devrait être exécuté régulièrement sur les serveurs de production
+Il pourrait être interéssant de placer la sortie dans un journal et comparer les diff entre 2 exécutions.
+
 $ curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh
+
++------------------------+
+| Web-App Firewall (WAF) |
++------------------------+
+modsecurity est un module pour Apache et nginx qui est un pare-feu applicatif.
+Il est à installer en plus d'Apache, il ne l'est pas par défaut.
+Il a besoin de Core Rule Set, un ensemble de règles affinées par l'expérience. C'est l'OWASP qui le gère, à trouver sur coreruleset.org
+
++---------------------+
+| Certificats SSL/TLS |
++---------------------+
+Let's Encrypt utilise le protocole ACME pour délivrer les certificats
+On peut utiliser certbot et le mettre dans un crontab pour qu'il demande régulièrement de renouveler le certificat et facilite la configuration en automatisant la vérification des domaines et la délivrance des certificats
+
+SSL-config est un outil fourni par mozilla pour simplifier la configuration du certificat.
+
+SSL-Labs permet d'analyser la configuration d'un serveur web. Il va plus loin que la vérification du certificat.
+Vérifier les algorithmes de chiffrement que le serveur propose et enlever ceux trop faibles. Cela peut entraîner une perte de compatibilité avec certains navigateurs et équipements anciens.
+
++---------------------------------------------------+
+| Attaquer le contenu des répertoires d'un site web |
++---------------------------------------------------+
+3 outils concourent à ce but :
+DirStalk, le plus récent, à prendre s'il faut en choisir un seul
+Dirb
+DirBuster
+
++---------------------------------+
+| Configuration d'un serveur mail |
++---------------------------------+
+Configuration de DNS et SPF, utilisation de SSL/TLS, configuration des ports de messagerie (les ports SMTP, POP et IMAP doivent n'accepter que les connexions depuis les adresses IP autorisées), pare-feu (bloquer les connexions entrantes non sécurisées), surveillance des journaux, mise à jour régulière, filtres anti-spam, DKIM et DMARC (détection des courriels falsifiés), logiciels anti-virus et anti-malware
 
 +------+
 | Hash |
@@ -536,6 +580,21 @@ Se connecter à Scirius depuis http://localhost avec le couple selks-user:selks-
 Se connecter à Suricata depuis https://localhost/suricata/ sans compte
 Se connecter à Cyberchef depuis https://localhost/static/cyberchef/ sans compte
 
++------+
+| SIEM |
++------+
+Un SIEM est un outil de sécurité informatique pour collecter, analyser et corréler les données provenant de différentes sources
+journaux, flux de réseau, alertes de sécurité, informations sur les vulnérabilités...
+Le SIEM analyse ces données, peut fournit des fonctions de surveillance en temps réel , d'alerte et de reporting
+
++------------------------+
+| File Integrity MAnager |
++------------------------+
+Il est conçu pour surveiller l'intégrité des fichiers
+Il utilise du hachage au démarrage du système et un contrôle des droits d'accès
+
+AIDE, WAZUH, SAMHAIN, BELTANE, AFICK
+
 +----------------------+
 | Dépôts Github sympas |
 +----------------------+
@@ -556,3 +615,20 @@ Fail2ban
 		La conf est dans /etc/fail2ban
 		Ne rien toucher, juste surcharger la conf dans /etc/fail2ban/jail.d
 	$ fail2ban-client status
+
++-------+
+| Wazuh |
++-------+
+https://documentation.wazuh.com/current/quickstart.html
+
+Si docker est lancé
+	$ docker stop [process]
+	ou
+	$ systemctl stop docker
+	$ systemctl disable docker
+	
+	$ curl -sO https://packages.wazuh.com/4.3/wazuh-install.sh && sudo bash ./wazuh-install.sh -a
+		User: admin Password: IESVBHWccsH?t8vQi0yl3*mzfEHd?*sS
+	$ curl -so wazuh-agent-4.3.10.deb https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_4.3.10-1_amd64.deb
+	$ systemctl start wazuh-manager
+	$ systemctl enable wazuh-manager
