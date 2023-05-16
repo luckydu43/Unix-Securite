@@ -711,3 +711,8 @@ Si docker est lancé
 	$ curl -so wazuh-agent-4.3.10.deb https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_4.3.10-1_amd64.deb
 	$ systemctl start wazuh-manager
 	$ systemctl enable wazuh-manager
++-----+
+| Git |
++-----+
+git config --global alias.adog "log --all --decorate --graph --pretty='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'"
+	Permet de faire l'alias tree
